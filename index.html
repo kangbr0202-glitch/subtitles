@@ -11,8 +11,8 @@
   }
   .container {
     position: relative;
-    width: 1920px;
-    height: 1080px;
+    width: 1280px;
+    height: 720px;
   }
   .background {
     position: absolute;
@@ -24,13 +24,13 @@
   }
   .subtitle {
     position: absolute;
-    bottom: 40px; /* 바의 세로 위치 맞춤 */
-    left: 230px;  /* 로고 공간 피하기 */
-    width: 1650px; /* 흰색 바 안쪽 */
-    font-size: 50px;
+    bottom: 30px; /* 원래 40px에서 비율 맞춰 조금 줄임 */
+    left: 150px;  /* 원래 230px에서 비율 맞춰 조정 */
+    width: 980px; /* 원래 1650px에서 비율 맞춤 */
+    font-size: 38px; /* 50px → 38px 비율 맞춤 */
     font-weight: bold;
     font-family: 'Noto Sans KR', sans-serif;
-    color: black;
+    color: white;
     text-align: left;
     z-index: 2;
     opacity: 0;
@@ -48,31 +48,34 @@
 </div>
 
 <script>
-// 구글 시트 CSV URL (시트를 공개하고 '웹에 게시' → CSV 링크 복사)
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgFaFeqUC2YT4uAoIjfw8FbOT7hEW4wQFOcqubPMcTlHmrl6Z6RZqyg8JwZBxCf1BJhxqjUQ2tBUAs/pub?output=csv";
 
 let subtitles = [];
 let index = 0;
 const subtitleEl = document.getElementById("subtitle");
 
-// CSV 데이터 가져오기
 fetch(sheetURL)
   .then(res => res.text())
   .then(text => {
-    subtitles = text.split("\n").map(row => row.trim()).filter(Boolean);
+    subtitles = text.split("\n").slice(1)
+                    .map(row => row.trim())
+                    .filter(Boolean);
     if (subtitles.length > 0) {
       showNextSubtitle();
-      setInterval(showNextSubtitle, 5000); // 5초마다 변경
+      setInterval(showNextSubtitle, 5000);
     }
+  })
+  .catch(err => {
+    console.error("CSV 데이터 로딩 중 오류:", err);
   });
 
 function showNextSubtitle() {
-  subtitleEl.style.opacity = 0; // 페이드아웃
+  subtitleEl.style.opacity = 0;
   setTimeout(() => {
     subtitleEl.textContent = subtitles[index];
-    subtitleEl.style.opacity = 1; // 페이드인
+    subtitleEl.style.opacity = 1;
     index = (index + 1) % subtitles.length;
-  }, 1000); // 1초 디졸브 시간
+  }, 1000);
 }
 </script>
 </body>
