@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Live Subtitle</title>
-  <!-- ✅ Noto Sans KR 웹폰트 추가 -->
+  <!-- Noto Sans KR 웹폰트 -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap" rel="stylesheet">
-
   <style>
     html, body {
       margin: 0;
@@ -37,20 +36,20 @@
       left: 50%;
       transform: translateX(-50%);
       max-width: 90%;
-      font-size: 76px; /* 기존 38px의 2배 */
+      font-size: 50px;
       font-weight: 700;
       font-family: 'Noto Sans KR', sans-serif;
       color: #000;
       text-align: center;
       z-index: 2;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
+      opacity: 1; /* 초기 투명도 */
+      background-color: rgba(255, 255, 255, 0.95); /* 오퍼시티 95% */
+      padding: 20px 40px;
+      /* 네모 박스: 둥근 모서리 제거 */
+      border-radius: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      background-color: rgba(255, 255, 255, 0.8); /* 흰 배경, 오퍼시티 80% */
-      padding: 20px 40px;
-      border-radius: 10px;
     }
   </style>
 </head>
@@ -67,6 +66,12 @@
     let index = 0;
     const subtitleEl = document.getElementById("subtitle");
 
+    // 디졸브 설정
+    const frameRate = 30; // 30fps 기준
+    const totalFrames = 300; // 10초
+    const dissolveFrames = 20; // 마지막 20프레임만 디졸브
+    const stableFrames = totalFrames - dissolveFrames; // 280프레임 동안은 완전 불투명
+
     fetch(sheetURL)
       .then(res => res.text())
       .then(text => {
@@ -75,7 +80,6 @@
                         .filter(Boolean);
         if (subtitles.length > 0) {
           showNextSubtitle();
-          setInterval(showNextSubtitle, 5000);
         }
       })
       .catch(err => {
@@ -83,12 +87,25 @@
       });
 
     function showNextSubtitle() {
-      subtitleEl.style.opacity = 0;
-      setTimeout(() => {
-        subtitleEl.textContent = subtitles[index];
-        subtitleEl.style.opacity = 1;
-        index = (index + 1) % subtitles.length;
-      }, 1000);
+      subtitleEl.style.opacity = 1;
+      subtitleEl.textContent = subtitles[index];
+
+      let frame = 0;
+      const interval = setInterval(() => {
+        frame++;
+
+        // 마지막 20프레임 동안 디졸브
+        if (frame > stableFrames) {
+          const fadeRatio = (totalFrames - frame) / dissolveFrames;
+          subtitleEl.style.opacity = fadeRatio;
+        }
+
+        if (frame >= totalFrames) {
+          clearInterval(interval);
+          index = (index + 1) % subtitles.length;
+          showNextSubtitle();
+        }
+      }, 1000 / frameRate);
     }
   </script>
 </body>
