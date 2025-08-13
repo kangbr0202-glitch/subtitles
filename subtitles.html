@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Subtitle</title>
+  <!-- Noto Sans KR 웹폰트 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+    }
+
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .background {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('background.png') no-repeat center/cover;
+      z-index: 1;
+    }
+
+    .subtitle {
+      position: absolute;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 90%;
+      font-size: 50px;
+      font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #000;
+      text-align: center;
+      z-index: 2;
+      opacity: 1; /* 초기 투명도 */
+      background-color: rgba(255, 255, 255, 0.95); /* 오퍼시티 95% */
+      padding: 20px 40px;
+      /* 네모 박스: 둥근 모서리 제거 */
+      border-radius: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="background"></div>
+    <div id="subtitle" class="subtitle"></div>
+  </div>
+
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgFaFeqUC2YT4uAoIjfw8FbOT7hEW4wQFOcqubPMcTlHmrl6Z6RZqyg8JwZBxCf1BJhxqjUQ2tBUAs/pub?output=csv";
+
+    let subtitles = [];
+    let index = 0;
+    const subtitleEl = document.getElementById("subtitle");
+
+    // 디졸브 설정
+    const frameRate = 30; // 30fps 기준
+    const totalFrames = 300; // 10초
+    const dissolveFrames = 20; // 마지막 20프레임만 디졸브
+    const stableFrames = totalFrames - dissolveFrames; // 280프레임 동안은 완전 불투명
+
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(text => {
+        subtitles = text.split("\n").slice(1)
+                        .map(row => row.trim())
+                        .filter(Boolean);
+        if (subtitles.length > 0) {
+          showNextSubtitle();
+        }
+      })
+      .catch(err => {
+        console.error("CSV 데이터 로딩 중 오류:", err);
+      });
+
+    function showNextSubtitle() {
+      subtitleEl.style.opacity = 1;
+      subtitleEl.textContent = subtitles[index];
+
+      let frame = 0;
+      const interval = setInterval(() => {
+        frame++;
+
+        // 마지막 20프레임 동안 디졸브
+        if (frame > stableFrames) {
+          const fadeRatio = (totalFrames - frame) / dissolveFrames;
+          subtitleEl.style.opacity = fadeRatio;
+        }
+
+        if (frame >= totalFrames) {
+          clearInterval(interval);
+          index = (index + 1) % subtitles.length;
+          showNextSubtitle();
+        }
+      }, 1000 / frameRate);
+    }
+  </script>
+</body>
+</html>
